@@ -4,7 +4,7 @@ import { Resvg } from '@resvg/resvg-js';
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const jobs = [
-  ['assets/embrapa.io-white.svg', 'tools/logo_header.png', 107], // header (branca, fundo escuro)
+  ['assets/embrapa.io-white.svg', 'tools/logo_header.png', 128], // header (branca, fundo escuro) — 20% maior
   ['assets/embrapa.io.svg',       'tools/logo_io.png',     216], // splash (colorida)
   ['assets/embrapa.svg',          'tools/logo_embrapa.png', 121], // splash (colorida)
 ];
