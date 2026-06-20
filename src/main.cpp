@@ -28,6 +28,11 @@ LV_IMG_DECLARE(img_logo_header);   // embrapa.io branca (header)
 LV_IMG_DECLARE(img_io_color);      // embrapa.io colorida (splash)
 LV_IMG_DECLARE(img_embrapa_color); // Embrapa colorida (splash)
 
+// ícones extras (FontAwesome) embutidos nas ui_font_*
+#define SYM_CLOCK "\xEF\x80\x97"   // relógio (U+F017) — uptime
+#define SYM_GLOBE "\xEF\x82\xAC"   // globo (U+F0AC) — IP/rede
+#define SYM_CHIP  "\xEF\x8B\x9B"   // microchip (U+F2DB) — firmware
+
 // ---------------- Display / Touch ----------------
 #define SCR_W 320
 #define SCR_H 240
@@ -456,10 +461,18 @@ static void buildConfig(lv_obj_t* scr) {
   lv_obj_set_style_text_color(tt, COL_TXT, 0);
   lv_obj_align(tt, LV_ALIGN_TOP_LEFT, 10, 6);
 
+  // divider abaixo do título
+  lv_obj_t* dv = lv_obj_create(cfgScreen);
+  lv_obj_remove_style_all(dv);
+  lv_obj_set_size(dv, SCR_W - 20, 1);
+  lv_obj_set_pos(dv, 10, 28);
+  lv_obj_set_style_bg_color(dv, COL_BORDER, 0);
+  lv_obj_set_style_bg_opa(dv, LV_OPA_COVER, 0);
+
   lv_obj_t* form = lv_obj_create(cfgScreen);
   lv_obj_remove_style_all(form);
-  lv_obj_set_pos(form, 8, 28);
-  lv_obj_set_size(form, SCR_W - 16, 148);
+  lv_obj_set_pos(form, 8, 34);
+  lv_obj_set_size(form, SCR_W - 16, 142);
   lv_obj_set_flex_flow(form, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_style_pad_row(form, 5, 0);
   lv_obj_set_scroll_dir(form, LV_DIR_VER);
@@ -546,19 +559,38 @@ static void buildSystem(lv_obj_t* scr) {
   lv_obj_set_flex_flow(box, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_style_pad_row(box, 6, 0);
 
-  auto line = [&](const char* k) {
-    lv_obj_t* l = lv_label_create(box);
+  // cada linha: ícone (verde) + valor
+  auto line = [&](const char* sym, const char* k) {
+    lv_obj_t* row = lv_obj_create(box);
+    lv_obj_remove_style_all(row);
+    lv_obj_set_width(row, lv_pct(100));
+    lv_obj_set_height(row, LV_SIZE_CONTENT);
+    lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_column(row, 8, 0);
+    lv_obj_t* ic = lv_label_create(row);
+    lv_label_set_text(ic, sym);
+    lv_obj_set_style_text_font(ic, &ui_font_14, 0);
+    lv_obj_set_style_text_color(ic, COL_UP, 0);
+    lv_obj_set_width(ic, 18);
+    lv_obj_t* l = lv_label_create(row);
     lv_obj_set_style_text_color(l, COL_TXT, 0);
     lv_obj_set_style_text_font(l, &ui_font_14, 0);
     lv_label_set_text(l, k);
     return l;
   };
-  sysWifi = line("WiFi: ...");
-  sysIp   = line("IP: ...");
-  sysUp   = line("Uptime: ...");
-  sysRefr = line("Atualizado: nunca");
-  lv_obj_t* fw = line("Firmware: " FW_VERSION);
+  sysWifi = line(LV_SYMBOL_WIFI, "WiFi: ...");
+  sysIp   = line(SYM_GLOBE, "IP: ...");
+  sysUp   = line(SYM_CLOCK, "Uptime: ...");
+  sysRefr = line(LV_SYMBOL_REFRESH, "Atualizado: nunca");
+  lv_obj_t* fw = line(SYM_CHIP, "Firmware: " FW_VERSION);
   lv_obj_set_style_text_color(fw, COL_MUTED, 0);
+
+  // empurra o botão para o rodapé (usa o espaço livre)
+  lv_obj_t* spacer = lv_obj_create(box);
+  lv_obj_remove_style_all(spacer);
+  lv_obj_set_width(spacer, lv_pct(100));
+  lv_obj_set_flex_grow(spacer, 1);
 
   lv_obj_t* btn = lv_btn_create(box);
   lv_obj_set_width(btn, lv_pct(100));
