@@ -92,14 +92,13 @@
          color:#E6EDF3; font-size:9px; text-align:center; padding:4px 0; }
 
   /* splash */
-  .splash { width:320px; height:240px; display:flex; flex-direction:column;
-            align-items:center; justify-content:center; gap:12px; }
-  .splash .emblem { height:58px; }
-  .splash .word { width:152px; }
-  .splash .tag { font-size:11px; letter-spacing:5px; color:#8B949E; text-transform:uppercase; }
-  .pbar { width:150px; height:4px; background:#161B22; border-radius:2px; overflow:hidden; margin-top:4px; }
-  .pbar i { display:block; height:100%; width:62%; background:#3FB950; }
-  .conn { font-size:9px; color:#8B949E; }
+  .splash { width:320px; height:240px; background:#F2F5F9; display:flex; flex-direction:column;
+            align-items:center; justify-content:center; gap:20px; }
+  .splash .emblem { height:60px; }
+  .splash .word { width:216px; }
+  .pbar { width:166px; height:4px; background:#D9E0EA; border-radius:2px; overflow:hidden; margin-top:2px; }
+  .pbar i { display:block; height:100%; width:62%; background:#00773D; }
+  .conn { font-size:9px; color:#5B6472; }
 </style>
 </head>
 <body>
@@ -113,12 +112,11 @@
     <figure>
       <div class="bezel"><div class="device"><div class="splash">
         <img class="emblem" src="../assets/embrapa.svg" alt="Embrapa">
-        <img class="word" src="../assets/embrapa.io-white.svg" alt="embrapa.io">
-        <div class="tag">Desk&nbsp;Buddy</div>
+        <img class="word" src="../assets/embrapa.io.svg" alt="embrapa.io">
         <div class="pbar"><i></i></div>
         <div class="conn">Conectando ao Wi-Fi…</div>
       </div></div></div>
-      <figcaption><b>0 · Splash</b> — exibida no boot/reset: logo da Embrapa + wordmark <i>embrapa.io</i> + status de conexão.</figcaption>
+      <figcaption><b>0 · Splash</b> — boot/reset: logos <b>coloridas</b> da Embrapa e <i>embrapa.io</i> sobre fundo claro <code>#F2F5F9</code> + status de conexão.</figcaption>
     </figure>
 
     <!-- 1 · VISÃO GERAL -->
@@ -136,6 +134,7 @@
             <img class="logo" src="../assets/embrapa.io-white.svg" alt="embrapa.io">
             <div class="right">
               <svg class="wifi" width="14" height="11" viewBox="0 0 16 12"><circle cx="8" cy="9.4" r="1.2" fill="#3FB950"/><path d="M4 6.4a6 6 0 018 0" stroke="#3FB950" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M5.6 8a3.4 3.4 0 014.8 0" stroke="#3FB950" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>
+              <span class="date">20/6/26</span>
               <span>14:03</span>
             </div>
           </div>
@@ -163,7 +162,7 @@
         <div class="content">
           <div class="hdr">
             <img class="logo" src="../assets/embrapa.io-white.svg" alt="embrapa.io">
-            <div class="right"><span>14:03</span></div>
+            <div class="right"><svg class="wifi" width="14" height="11" viewBox="0 0 16 12"><circle cx="8" cy="9.4" r="1.2" fill="#3FB950"/><path d="M4 6.4a6 6 0 018 0" stroke="#3FB950" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M5.6 8a3.4 3.4 0 014.8 0" stroke="#3FB950" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg><span class="date">20/6/26</span><span>14:03</span></div>
           </div>
           <div class="sub"><span class="t">CLUSTERS</span><span class="cnt up">6/6 · Healthy</span></div>
           <div class="list">
@@ -192,7 +191,7 @@
         <div class="content">
           <div class="hdr">
             <img class="logo" src="../assets/embrapa.io-white.svg" alt="embrapa.io">
-            <div class="right"><span>14:03</span></div>
+            <div class="right"><svg class="wifi" width="14" height="11" viewBox="0 0 16 12"><circle cx="8" cy="9.4" r="1.2" fill="#3FB950"/><path d="M4 6.4a6 6 0 018 0" stroke="#3FB950" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M5.6 8a3.4 3.4 0 014.8 0" stroke="#3FB950" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg><span class="date">20/6/26</span><span>14:03</span></div>
           </div>
           <div class="sub"><span class="t">HOSTS</span><span class="cnt up">12/12 · Healthy</span></div>
           <div class="list">
@@ -224,7 +223,7 @@
         <div class="content">
           <div class="hdr">
             <img class="logo" src="../assets/embrapa.io-white.svg" alt="embrapa.io">
-            <div class="right"><span>14:03</span></div>
+            <div class="right"><svg class="wifi" width="14" height="11" viewBox="0 0 16 12"><circle cx="8" cy="9.4" r="1.2" fill="#3FB950"/><path d="M4 6.4a6 6 0 018 0" stroke="#3FB950" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M5.6 8a3.4 3.4 0 014.8 0" stroke="#3FB950" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg><span class="date">20/6/26</span><span>14:03</span></div>
           </div>
           <div class="sub"><span class="t">SERVIÇOS</span><span class="cnt warn">24/25 · 1 off</span></div>
           <div class="list">
@@ -256,7 +255,7 @@
         <div class="content">
           <div class="hdr">
             <img class="logo" src="../assets/embrapa.io-white.svg" alt="embrapa.io">
-            <div class="right"><span>14:03</span></div>
+            <div class="right"><svg class="wifi" width="14" height="11" viewBox="0 0 16 12"><circle cx="8" cy="9.4" r="1.2" fill="#3FB950"/><path d="M4 6.4a6 6 0 018 0" stroke="#3FB950" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M5.6 8a3.4 3.4 0 014.8 0" stroke="#3FB950" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg><span class="date">20/6/26</span><span>14:03</span></div>
           </div>
           <div class="sub"><span class="t">SISTEMA</span><span class="cnt warn">Plataforma: 1 off</span></div>
           <!-- visão de tudo: 3 grupos -->
