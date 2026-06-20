@@ -15,6 +15,7 @@
 #include <lvgl.h>
 #include <time.h>
 #include <sys/time.h>
+#include <Preferences.h>
 #include "config.h"
 
 // Fontes Montserrat com acentos PT-BR (geradas via lv_font_conv → src/ui_font_*.c)
@@ -91,6 +92,43 @@ lv_obj_t* clocks[5]; int nClocks = 0;   // relógio + data por tela (no header)
 lv_obj_t* splash = nullptr;   // tela de boot (logos)
 bool timeSet = false;         // hora já ajustada (via header Date do Gatus)
 unsigned long lastOkRefresh = 0;
+unsigned long lastFetch = 0;
+
+// ---------------- Configuração persistente (NVS) ----------------
+Preferences prefs;
+struct Settings { String ssid, pass, tz; uint32_t refreshMs; uint8_t bright; bool autob; } cfg;
+const char* TZ_STR[4] = { "<-04>4", "<-03>3", "<-02>2", "<-05>5" };
+const char* TZ_LBL    = "Campo Grande (UTC-4)\nBrasília (UTC-3)\nNoronha (UTC-2)\nAcre (UTC-5)";
+const uint32_t REFRESH_OPT[3] = { 30000UL, 60000UL, 300000UL };
+const char* REFRESH_LBL = "30 s\n60 s\n5 min";
+
+int tzIdx()      { for (int i = 0; i < 4; i++) if (cfg.tz == TZ_STR[i]) return i; return 0; }
+int refreshIdx() { for (int i = 0; i < 3; i++) if (cfg.refreshMs == REFRESH_OPT[i]) return i; return 1; }
+
+void loadCfg() {
+  prefs.begin("deskbuddy", true);
+  cfg.ssid      = prefs.getString("ssid", WIFI_SSID);
+  cfg.pass      = prefs.getString("pass", WIFI_PASSWORD);
+  cfg.tz        = prefs.getString("tz", "<-04>4");
+  cfg.refreshMs = prefs.getUInt("refresh", 60000UL);
+  cfg.bright    = prefs.getUChar("bright", 80);
+  cfg.autob     = prefs.getBool("autob", false);
+  prefs.end();
+}
+void saveCfg() {
+  prefs.begin("deskbuddy", false);
+  prefs.putString("ssid", cfg.ssid); prefs.putString("pass", cfg.pass);
+  prefs.putString("tz", cfg.tz);     prefs.putUInt("refresh", cfg.refreshMs);
+  prefs.putUChar("bright", cfg.bright); prefs.putBool("autob", cfg.autob);
+  prefs.end();
+}
+#define BL_PIN 21
+void applyBrightness(uint8_t pct) { pct = constrain(pct, 5, 100); ledcWrite(BL_PIN, map(pct, 0, 100, 0, 255)); }
+
+// refs da tela de configuração
+lv_obj_t* cfgScreen = nullptr;
+lv_obj_t* kb = nullptr;
+lv_obj_t* taSsid; lv_obj_t* taPass; lv_obj_t* ddTz; lv_obj_t* ddRefresh; lv_obj_t* sldBright; lv_obj_t* swAuto;
 
 // =================================================================
 //  Drivers LVGL
@@ -341,6 +379,162 @@ static void addRow(lv_obj_t* box, const char* name, bool up, uint16_t ms) {
   lv_obj_set_style_text_font(st, &ui_font_12, 0);
 }
 
+// =================================================================
+//  Tela de Configuração (teclado na tela + NVS)
+// =================================================================
+static lv_obj_t* cfgRow(lv_obj_t* parent, const char* lbl) {
+  lv_obj_t* r = lv_obj_create(parent);
+  lv_obj_remove_style_all(r);
+  lv_obj_set_width(r, lv_pct(100));
+  lv_obj_set_height(r, LV_SIZE_CONTENT);
+  lv_obj_set_flex_flow(r, LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(r, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_set_style_pad_column(r, 8, 0);
+  lv_obj_t* l = lv_label_create(r);
+  lv_label_set_text(l, lbl);
+  lv_obj_set_style_text_font(l, &ui_font_12, 0);
+  lv_obj_set_style_text_color(l, COL_MUTED, 0);
+  lv_obj_set_width(l, 56);
+  return r;
+}
+
+static void ta_event(lv_event_t* e) {
+  lv_obj_t* ta = lv_event_get_target(e);
+  lv_keyboard_set_textarea(kb, ta);
+  lv_obj_clear_flag(kb, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_move_foreground(kb);
+}
+static void kb_event(lv_event_t* e) {
+  lv_event_code_t c = lv_event_get_code(e);
+  if (c == LV_EVENT_READY || c == LV_EVENT_CANCEL) lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+}
+static void cancel_cb(lv_event_t* e) {
+  lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(cfgScreen, LV_OBJ_FLAG_HIDDEN);
+}
+static void save_cb(lv_event_t* e) {
+  cfg.ssid = lv_textarea_get_text(taSsid);
+  cfg.pass = lv_textarea_get_text(taPass);
+  cfg.tz = TZ_STR[lv_dropdown_get_selected(ddTz)];
+  cfg.refreshMs = REFRESH_OPT[lv_dropdown_get_selected(ddRefresh)];
+  cfg.bright = lv_slider_get_value(sldBright);
+  cfg.autob = lv_obj_has_state(swAuto, LV_STATE_CHECKED);
+  saveCfg();
+  setenv("TZ", cfg.tz.c_str(), 1); tzset();
+  if (!cfg.autob) applyBrightness(cfg.bright);
+  WiFi.disconnect(); WiFi.begin(cfg.ssid.c_str(), cfg.pass.c_str());
+  dataFromGatus = false; timeSet = false; lastFetch = 0;
+  Serial.printf("[Config] salvo: ssid=%s tz=%s refresh=%lu bright=%u auto=%d\n",
+    cfg.ssid.c_str(), cfg.tz.c_str(), (unsigned long)cfg.refreshMs, cfg.bright, cfg.autob);
+  lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(cfgScreen, LV_OBJ_FLAG_HIDDEN);
+}
+static void openCfg_cb(lv_event_t* e) {
+  lv_textarea_set_text(taSsid, cfg.ssid.c_str());
+  lv_textarea_set_text(taPass, cfg.pass.c_str());
+  lv_dropdown_set_selected(ddTz, tzIdx());
+  lv_dropdown_set_selected(ddRefresh, refreshIdx());
+  lv_slider_set_value(sldBright, cfg.bright, LV_ANIM_OFF);
+  if (cfg.autob) lv_obj_add_state(swAuto, LV_STATE_CHECKED);
+  else           lv_obj_clear_state(swAuto, LV_STATE_CHECKED);
+  lv_obj_clear_flag(cfgScreen, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_move_foreground(cfgScreen);
+}
+
+static void buildConfig(lv_obj_t* scr) {
+  cfgScreen = lv_obj_create(scr);
+  lv_obj_remove_style_all(cfgScreen);
+  lv_obj_set_size(cfgScreen, SCR_W, SCR_H);
+  lv_obj_set_style_bg_color(cfgScreen, COL_BG, 0);
+  lv_obj_set_style_bg_opa(cfgScreen, LV_OPA_COVER, 0);
+  lv_obj_clear_flag(cfgScreen, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_add_flag(cfgScreen, LV_OBJ_FLAG_HIDDEN);
+
+  lv_obj_t* tt = lv_label_create(cfgScreen);
+  lv_label_set_text(tt, "Configurações");
+  lv_obj_set_style_text_font(tt, &ui_font_16, 0);
+  lv_obj_set_style_text_color(tt, COL_TXT, 0);
+  lv_obj_align(tt, LV_ALIGN_TOP_LEFT, 10, 6);
+
+  lv_obj_t* form = lv_obj_create(cfgScreen);
+  lv_obj_remove_style_all(form);
+  lv_obj_set_pos(form, 8, 28);
+  lv_obj_set_size(form, SCR_W - 16, 148);
+  lv_obj_set_flex_flow(form, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_style_pad_row(form, 5, 0);
+  lv_obj_set_scroll_dir(form, LV_DIR_VER);
+  lv_obj_set_scrollbar_mode(form, LV_SCROLLBAR_MODE_AUTO);
+
+  lv_obj_t* r1 = cfgRow(form, "Wi-Fi");
+  taSsid = lv_textarea_create(r1);
+  lv_textarea_set_one_line(taSsid, true);
+  lv_textarea_set_placeholder_text(taSsid, "SSID");
+  lv_obj_set_flex_grow(taSsid, 1);
+  lv_obj_set_height(taSsid, 30);
+  lv_obj_set_style_text_font(taSsid, &ui_font_14, 0);
+  lv_obj_add_event_cb(taSsid, ta_event, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_t* r2 = cfgRow(form, "Senha");
+  taPass = lv_textarea_create(r2);
+  lv_textarea_set_one_line(taPass, true);
+  lv_textarea_set_password_mode(taPass, true);
+  lv_textarea_set_placeholder_text(taPass, "senha");
+  lv_obj_set_flex_grow(taPass, 1);
+  lv_obj_set_height(taPass, 30);
+  lv_obj_set_style_text_font(taPass, &ui_font_14, 0);
+  lv_obj_add_event_cb(taPass, ta_event, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_t* r3 = cfgRow(form, "Fuso");
+  ddTz = lv_dropdown_create(r3);
+  lv_dropdown_set_options(ddTz, TZ_LBL);
+  lv_obj_set_flex_grow(ddTz, 1);
+  lv_obj_set_style_text_font(ddTz, &ui_font_14, 0);
+  lv_obj_set_style_text_font(lv_dropdown_get_list(ddTz), &ui_font_14, 0);
+
+  lv_obj_t* r4 = cfgRow(form, "Atualiz.");
+  ddRefresh = lv_dropdown_create(r4);
+  lv_dropdown_set_options(ddRefresh, REFRESH_LBL);
+  lv_obj_set_flex_grow(ddRefresh, 1);
+  lv_obj_set_style_text_font(ddRefresh, &ui_font_14, 0);
+  lv_obj_set_style_text_font(lv_dropdown_get_list(ddRefresh), &ui_font_14, 0);
+
+  lv_obj_t* r5 = cfgRow(form, "Brilho");
+  sldBright = lv_slider_create(r5);
+  lv_slider_set_range(sldBright, 5, 100);
+  lv_obj_set_flex_grow(sldBright, 1);
+  lv_obj_t* aut = lv_label_create(r5);
+  lv_label_set_text(aut, "Auto");
+  lv_obj_set_style_text_font(aut, &ui_font_12, 0);
+  lv_obj_set_style_text_color(aut, COL_MUTED, 0);
+  swAuto = lv_switch_create(r5);
+  lv_obj_set_size(swAuto, 40, 22);
+
+  // botões (fora do form, sempre no rodapé)
+  lv_obj_t* cancel = lv_btn_create(cfgScreen);
+  lv_obj_set_size(cancel, 120, 32);
+  lv_obj_align(cancel, LV_ALIGN_BOTTOM_LEFT, 10, -6);
+  lv_obj_set_style_bg_color(cancel, COL_CARD, 0);
+  lv_obj_add_event_cb(cancel, cancel_cb, LV_EVENT_CLICKED, NULL);
+  lv_obj_t* cl = lv_label_create(cancel); lv_label_set_text(cl, "Cancelar");
+  lv_obj_set_style_text_font(cl, &ui_font_14, 0); lv_obj_center(cl);
+
+  lv_obj_t* save = lv_btn_create(cfgScreen);
+  lv_obj_set_size(save, 120, 32);
+  lv_obj_align(save, LV_ALIGN_BOTTOM_RIGHT, -10, -6);
+  lv_obj_set_style_bg_color(save, COL_UP, 0);
+  lv_obj_add_event_cb(save, save_cb, LV_EVENT_CLICKED, NULL);
+  lv_obj_t* sl = lv_label_create(save); lv_label_set_text(sl, "Salvar");
+  lv_obj_set_style_text_font(sl, &ui_font_14, 0); lv_obj_center(sl);
+
+  // teclado (oculto; aparece ao tocar num campo de texto)
+  kb = lv_keyboard_create(cfgScreen);
+  lv_obj_set_size(kb, SCR_W, 120);
+  lv_obj_align(kb, LV_ALIGN_BOTTOM_MID, 0, 0);
+  lv_keyboard_set_textarea(kb, taSsid);
+  lv_obj_add_event_cb(kb, kb_event, LV_EVENT_ALL, NULL);
+  lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+}
+
 static void buildSystem(lv_obj_t* scr) {
   lv_obj_t* p = makePage(scr);
   page[4] = p;
@@ -365,6 +559,18 @@ static void buildSystem(lv_obj_t* scr) {
   sysRefr = line("Atualizado: nunca");
   lv_obj_t* fw = line("Firmware: " FW_VERSION);
   lv_obj_set_style_text_color(fw, COL_MUTED, 0);
+
+  lv_obj_t* btn = lv_btn_create(box);
+  lv_obj_set_width(btn, lv_pct(100));
+  lv_obj_set_height(btn, 34);
+  lv_obj_set_style_bg_color(btn, lv_color_hex(0x1B2330), 0);
+  lv_obj_set_style_border_color(btn, COL_BORDER, 0);
+  lv_obj_set_style_border_width(btn, 1, 0);
+  lv_obj_add_event_cb(btn, openCfg_cb, LV_EVENT_CLICKED, NULL);
+  lv_obj_t* bl = lv_label_create(btn);
+  lv_label_set_text(bl, LV_SYMBOL_SETTINGS "  Configurar");
+  lv_obj_set_style_text_font(bl, &ui_font_14, 0);
+  lv_obj_center(bl);
 }
 
 // =================================================================
@@ -493,12 +699,15 @@ static bool fetchGatus() {
 void setup() {
   Serial.begin(115200);
   Serial.println("\n[DeskBuddy] boot");
+  loadCfg();
   pinMode(LED_R, OUTPUT); pinMode(LED_G, OUTPUT); pinMode(LED_B, OUTPUT);
   digitalWrite(LED_R, HIGH); digitalWrite(LED_G, HIGH); digitalWrite(LED_B, HIGH);
 
   tft.init();
   tft.setRotation(1);              // landscape 320x240
   tft.fillScreen(TFT_BLACK);
+  ledcAttach(BL_PIN, 5000, 8);     // backlight via PWM (controle de brilho)
+  applyBrightness(cfg.bright);
 
   touchSPI.begin(T_CLK, T_MISO, T_MOSI, T_CS);
   ts.begin(touchSPI);
@@ -526,6 +735,7 @@ void setup() {
   page[2] = buildListPage(scr, G_HOSTS, "Hosts");
   page[3] = buildListPage(scr, G_SERVICOS, "Serviços");
   buildSystem(scr);
+  buildConfig(scr);
 
   seedData();
   refreshUI();
@@ -558,11 +768,10 @@ void setup() {
   lv_obj_align(scn, LV_ALIGN_BOTTOM_MID, 0, -16);
 
   WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  setenv("TZ", "<-04>4", 1); tzset();  // America/Campo_Grande (UTC-4); hora vem do header Date do Gatus
+  WiFi.begin(cfg.ssid.c_str(), cfg.pass.c_str());
+  setenv("TZ", cfg.tz.c_str(), 1); tzset();  // fuso configurável (NVS); hora vem do header Date do Gatus
 }
 
-unsigned long lastFetch = 0;
 void loop() {
   lv_timer_handler();
 
@@ -574,7 +783,8 @@ void loop() {
   bool conn = (WiFi.status() == WL_CONNECTED);
   if (conn != wasConn) {
     wasConn = conn;
-    lv_label_set_text(sysWifi, conn ? "WiFi: " WIFI_SSID " (OK)" : "WiFi: conectando...");
+    if (conn) { String w = "WiFi: " + cfg.ssid + " (OK)"; lv_label_set_text(sysWifi, w.c_str()); }
+    else      lv_label_set_text(sysWifi, "WiFi: conectando...");
     char ip[32]; snprintf(ip, sizeof(ip), "IP: %s", conn ? WiFi.localIP().toString().c_str() : "—");
     lv_label_set_text(sysIp, ip);
     Serial.printf("[WiFi] %s %s\n", conn ? "conectado" : "desconectado", conn ? WiFi.localIP().toString().c_str() : "");
@@ -584,6 +794,10 @@ void loop() {
   static unsigned long lastUp = 0;
   if (millis() - lastUp > 1000) {
     lastUp = millis();
+    if (cfg.autob) {   // brilho automático pelo LDR
+      int ldr = analogRead(PIN_LDR);
+      applyBrightness(map(constrain(ldr, 0, 4095), 0, 4095, 20, 100));
+    }
     unsigned long s = millis() / 1000;
     char u[40]; snprintf(u, sizeof(u), "Uptime: %luh %02lum %02lus", s/3600, (s/60)%60, s%60);
     lv_label_set_text(sysUp, u);
@@ -602,7 +816,7 @@ void loop() {
   }
 
   // fetch periódico (antes do 1º sucesso, tenta a cada 5 s; depois, REFRESH_MS)
-  unsigned long fetchIv = dataFromGatus ? REFRESH_MS : 5000UL;
+  unsigned long fetchIv = dataFromGatus ? cfg.refreshMs : 5000UL;
   if (conn && (lastFetch == 0 || millis() - lastFetch > fetchIv)) {
     lastFetch = millis();
     if (fetchGatus()) {
