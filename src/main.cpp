@@ -13,7 +13,13 @@
 #include <TFT_eSPI.h>
 #include <XPT2046_Touchscreen.h>
 #include <lvgl.h>
+#include <time.h>
 #include "config.h"
+
+// Fontes Montserrat com acentos PT-BR (geradas via lv_font_conv → src/ui_font_*.c)
+LV_FONT_DECLARE(ui_font_12);
+LV_FONT_DECLARE(ui_font_14);
+LV_FONT_DECLARE(ui_font_16);
 
 // ---------------- Display / Touch ----------------
 #define SCR_W 320
@@ -75,6 +81,7 @@ lv_obj_t* sysWifi;
 lv_obj_t* sysIp;
 lv_obj_t* sysUp;
 lv_obj_t* sysRefr;
+lv_obj_t* lblClock;   // relógio + data (NTP) no canto sup. direito
 unsigned long lastOkRefresh = 0;
 
 // =================================================================
@@ -160,7 +167,7 @@ static lv_obj_t* header(lv_obj_t* parent, const char* title) {
   lv_obj_t* h = lv_label_create(parent);
   lv_label_set_text(h, title);
   lv_obj_set_style_text_color(h, COL_TXT, 0);
-  lv_obj_set_style_text_font(h, &lv_font_montserrat_16, 0);
+  lv_obj_set_style_text_font(h, &ui_font_16, 0);
   lv_obj_align(h, LV_ALIGN_TOP_LEFT, 0, 2);
   return h;
 }
@@ -190,7 +197,7 @@ static void buildNav(lv_obj_t* scr) {
     lv_obj_set_style_text_font(ic, &lv_font_montserrat_16, 0);
     lv_obj_t* tx = lv_label_create(b);
     lv_label_set_text(tx, NAV_TXT[i]);
-    lv_obj_set_style_text_font(tx, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_font(tx, &ui_font_12, 0);
 
     navBtn[i] = b; navIcon[i] = ic; navTxt[i] = tx;
   }
@@ -229,7 +236,7 @@ static void buildOverview(lv_obj_t* scr) {
 
     lv_obj_t* lbl = lv_label_create(tile);
     lv_obj_set_style_text_color(lbl, COL_MUTED, 0);
-    lv_obj_set_style_text_font(lbl, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_font(lbl, &ui_font_12, 0);
     lv_obj_align(lbl, LV_ALIGN_TOP_LEFT, 0, 0);
 
     if (t < G_COUNT) {
@@ -242,7 +249,7 @@ static void buildOverview(lv_obj_t* scr) {
       ovDot[t] = dot(tile, COL_MUTED);
       lv_obj_align(ovDot[t], LV_ALIGN_BOTTOM_LEFT, 0, 2);
       ovStat[t] = lv_label_create(tile);
-      lv_obj_set_style_text_font(ovStat[t], &lv_font_montserrat_12, 0);
+      lv_obj_set_style_text_font(ovStat[t], &ui_font_12, 0);
       lv_obj_align(ovStat[t], LV_ALIGN_BOTTOM_LEFT, 18, 2);
       lv_label_set_text(ovStat[t], "...");
     } else {
@@ -253,7 +260,7 @@ static void buildOverview(lv_obj_t* scr) {
       lv_label_set_text(ovAllIcon, LV_SYMBOL_REFRESH);
       lv_obj_set_style_text_color(ovAllIcon, COL_MUTED, 0);
       ovAllTxt = lv_label_create(tile);
-      lv_obj_set_style_text_font(ovAllTxt, &lv_font_montserrat_12, 0);
+      lv_obj_set_style_text_font(ovAllTxt, &ui_font_12, 0);
       lv_obj_align(ovAllTxt, LV_ALIGN_BOTTOM_MID, 0, 2);
       lv_label_set_text(ovAllTxt, "lendo...");
     }
@@ -291,14 +298,14 @@ static void addRow(lv_obj_t* box, const char* name, bool up, uint16_t ms) {
   lv_label_set_text(nm, name);
   lv_label_set_long_mode(nm, LV_LABEL_LONG_DOT);
   lv_obj_set_style_text_color(nm, COL_TXT, 0);
-  lv_obj_set_style_text_font(nm, &lv_font_montserrat_14, 0);
+  lv_obj_set_style_text_font(nm, &ui_font_14, 0);
   lv_obj_set_flex_grow(nm, 1);
 
   lv_obj_t* st = lv_label_create(row);
   if (up) { char b[12]; snprintf(b, sizeof(b), "%u ms", ms); lv_label_set_text(st, b);
             lv_obj_set_style_text_color(st, COL_MUTED, 0); }
   else    { lv_label_set_text(st, "off"); lv_obj_set_style_text_color(st, COL_DOWN, 0); }
-  lv_obj_set_style_text_font(st, &lv_font_montserrat_12, 0);
+  lv_obj_set_style_text_font(st, &ui_font_12, 0);
 }
 
 static void buildSystem(lv_obj_t* scr) {
@@ -315,7 +322,7 @@ static void buildSystem(lv_obj_t* scr) {
   auto line = [&](const char* k) {
     lv_obj_t* l = lv_label_create(box);
     lv_obj_set_style_text_color(l, COL_TXT, 0);
-    lv_obj_set_style_text_font(l, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_font(l, &ui_font_14, 0);
     lv_label_set_text(l, k);
     return l;
   };
@@ -476,8 +483,15 @@ void setup() {
   refreshUI();
   showPage(0);
 
+  lblClock = lv_label_create(scr);
+  lv_obj_set_style_text_font(lblClock, &ui_font_12, 0);
+  lv_obj_set_style_text_color(lblClock, COL_MUTED, 0);
+  lv_label_set_text(lblClock, "--/--/--  --:--");
+  lv_obj_align(lblClock, LV_ALIGN_TOP_RIGHT, -8, 6);
+
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  configTzTime("<-03>3", "a.st1.ntp.br", "pool.ntp.org");  // fuso de Brasília (UTC-3)
 }
 
 unsigned long lastFetch = 0;
@@ -502,6 +516,13 @@ void loop() {
     unsigned long s = millis() / 1000;
     char u[40]; snprintf(u, sizeof(u), "Uptime: %luh %02lum %02lus", s/3600, (s/60)%60, s%60);
     lv_label_set_text(sysUp, u);
+    time_t nowt = time(nullptr);
+    if (nowt > 1700000000) {   // hora já sincronizada via NTP
+      struct tm tmv; localtime_r(&nowt, &tmv);
+      char cb[24]; snprintf(cb, sizeof(cb), "%d/%d/%02d  %02d:%02d",
+        tmv.tm_mday, tmv.tm_mon + 1, (tmv.tm_year + 1900) % 100, tmv.tm_hour, tmv.tm_min);
+      lv_label_set_text(lblClock, cb);
+    }
   }
 
   // fetch periódico
