@@ -22,3 +22,9 @@ CLAUDE.md
 
 # Credenciais (WiFi etc.) — nunca versionar
 include/secrets.h
+
+# Node (gerador de assets de logo) e PNGs intermediários
+node_modules/
+package.json
+package-lock.json
+tools/*.png

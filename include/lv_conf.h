@@ -16,7 +16,7 @@
 #define LV_COLOR_CHROMA_KEY lv_color_hex(0x00ff00)
 
 /*================  MEMÓRIA  ================*/
-#define LV_MEM_CUSTOM 0
+#define LV_MEM_CUSTOM 1
 #if LV_MEM_CUSTOM == 0
     #define LV_MEM_SIZE (48U * 1024U)
     #define LV_MEM_ADR 0

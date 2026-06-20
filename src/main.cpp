@@ -14,12 +14,18 @@
 #include <XPT2046_Touchscreen.h>
 #include <lvgl.h>
 #include <time.h>
+#include <sys/time.h>
 #include "config.h"
 
 // Fontes Montserrat com acentos PT-BR (geradas via lv_font_conv → src/ui_font_*.c)
 LV_FONT_DECLARE(ui_font_12);
 LV_FONT_DECLARE(ui_font_14);
 LV_FONT_DECLARE(ui_font_16);
+
+// Logos (bitmaps LVGL gerados em src/img_*.c)
+LV_IMG_DECLARE(img_logo_header);   // embrapa.io branca (header)
+LV_IMG_DECLARE(img_io_color);      // embrapa.io colorida (splash)
+LV_IMG_DECLARE(img_embrapa_color); // Embrapa colorida (splash)
 
 // ---------------- Display / Touch ----------------
 #define SCR_W 320
@@ -82,6 +88,8 @@ lv_obj_t* sysIp;
 lv_obj_t* sysUp;
 lv_obj_t* sysRefr;
 lv_obj_t* lblClock;   // relógio + data (NTP) no canto sup. direito
+lv_obj_t* splash = nullptr;   // tela de boot (logos)
+bool timeSet = false;         // hora já ajustada (via header Date do Gatus)
 unsigned long lastOkRefresh = 0;
 
 // =================================================================
@@ -164,12 +172,19 @@ static const char* NAV_ICON[5] = { LV_SYMBOL_HOME, LV_SYMBOL_DRIVE, LV_SYMBOL_LI
 static const char* NAV_TXT[5]  = { "Geral", "Clusters", "Hosts", "Serviços", "Sistema" };
 
 static lv_obj_t* header(lv_obj_t* parent, const char* title) {
-  lv_obj_t* h = lv_label_create(parent);
-  lv_label_set_text(h, title);
-  lv_obj_set_style_text_color(h, COL_TXT, 0);
-  lv_obj_set_style_text_font(h, &ui_font_16, 0);
-  lv_obj_align(h, LV_ALIGN_TOP_LEFT, 0, 2);
-  return h;
+  // logo embrapa.io (branca) à esquerda — substitui o título de texto
+  lv_obj_t* logo = lv_img_create(parent);
+  lv_img_set_src(logo, &img_logo_header);
+  lv_obj_align(logo, LV_ALIGN_TOP_LEFT, 0, 4);
+  // título secundário (curto) ao lado do logo, p/ telas de lista; vazio na Visão Geral
+  if (title && title[0]) {
+    lv_obj_t* h = lv_label_create(parent);
+    lv_label_set_text(h, title);
+    lv_obj_set_style_text_color(h, COL_MUTED, 0);
+    lv_obj_set_style_text_font(h, &ui_font_14, 0);
+    lv_obj_align_to(h, logo, LV_ALIGN_OUT_RIGHT_MID, 10, 1);
+  }
+  return logo;
 }
 
 static void buildNav(lv_obj_t* scr) {
@@ -216,7 +231,7 @@ static lv_obj_t* makePage(lv_obj_t* scr) {
 static void buildOverview(lv_obj_t* scr) {
   lv_obj_t* p = makePage(scr);
   page[0] = p;
-  header(p, "Status da Plataforma");
+  header(p, "");   // só o logo embrapa.io (sem título)
 
   lv_obj_t* grid = lv_obj_create(p);
   lv_obj_set_size(grid, SCR_W - 64 - 16, SCR_H - 36);
@@ -410,10 +425,25 @@ static bool fetchGatus() {
   HTTPClient https; https.setTimeout(8000);
   String url = String("https://") + GATUS_HOST + GATUS_PATH;
   if (!https.begin(client, url)) return false;
+  static const char* hdrKeys[] = { "Date" };
+  https.collectHeaders(hdrKeys, 1);
   int code = https.GET();
   Serial.printf("[Gatus] HTTP %d\n", code);
   bool ok = false;
   if (code == 200) {
+    if (!timeSet) {   // ajusta o relógio pelo header Date (GMT) — sem SNTP/UDP
+      String d = https.header("Date");
+      struct tm tmd; memset(&tmd, 0, sizeof(tmd));
+      if (d.length() && strptime(d.c_str(), "%a, %d %b %Y %H:%M:%S", &tmd)) {
+        setenv("TZ", "UTC0", 1); tzset();
+        time_t utc = mktime(&tmd);
+        setenv("TZ", "<-04>4", 1); tzset();
+        struct timeval tv = { utc, 0 };
+        settimeofday(&tv, nullptr);
+        timeSet = true;
+        Serial.printf("[Time] Date set: %s\n", d.c_str());
+      }
+    }
     JsonDocument filter;
     filter[0]["name"] = true;
     filter[0]["group"] = true;
@@ -489,14 +519,36 @@ void setup() {
   lv_label_set_text(lblClock, "--/--/--  --:--");
   lv_obj_align(lblClock, LV_ALIGN_TOP_RIGHT, -8, 6);
 
+  // splash de boot: logos coloridas (Embrapa + embrapa.io) sobre lavanda
+  splash = lv_obj_create(scr);
+  lv_obj_remove_style_all(splash);
+  lv_obj_set_size(splash, SCR_W, SCR_H);
+  lv_obj_set_style_bg_color(splash, lv_color_hex(0xE9E3F8), 0);
+  lv_obj_set_style_bg_opa(splash, LV_OPA_COVER, 0);
+  lv_obj_clear_flag(splash, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_t* sem = lv_img_create(splash);
+  lv_img_set_src(sem, &img_embrapa_color);
+  lv_obj_align(sem, LV_ALIGN_CENTER, 0, -36);
+  lv_obj_t* sio = lv_img_create(splash);
+  lv_img_set_src(sio, &img_io_color);
+  lv_obj_align(sio, LV_ALIGN_CENTER, 0, 30);
+  lv_obj_t* scn = lv_label_create(splash);
+  lv_label_set_text(scn, "Conectando ao Wi-Fi...");
+  lv_obj_set_style_text_font(scn, &ui_font_12, 0);
+  lv_obj_set_style_text_color(scn, lv_color_hex(0x5B6472), 0);
+  lv_obj_align(scn, LV_ALIGN_BOTTOM_MID, 0, -16);
+
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  configTzTime("<-03>3", "a.st1.ntp.br", "pool.ntp.org");  // fuso de Brasília (UTC-3)
+  setenv("TZ", "<-04>4", 1); tzset();  // America/Campo_Grande (UTC-4); hora vem do header Date do Gatus
 }
 
 unsigned long lastFetch = 0;
 void loop() {
   lv_timer_handler();
+
+  // fecha o splash após a 1ª leitura OK do Gatus (ou no máx. 12 s)
+  if (splash && millis() > 12000) { lv_obj_del(splash); splash = nullptr; }
 
   // WiFi/IP info na tela Sistema
   static bool wasConn = false;
@@ -507,7 +559,6 @@ void loop() {
     char ip[32]; snprintf(ip, sizeof(ip), "IP: %s", conn ? WiFi.localIP().toString().c_str() : "—");
     lv_label_set_text(sysIp, ip);
     Serial.printf("[WiFi] %s %s\n", conn ? "conectado" : "desconectado", conn ? WiFi.localIP().toString().c_str() : "");
-    if (conn) configTzTime("<-03>3", "pool.ntp.org", "time.google.com", "a.st1.ntp.br");
   }
 
   // uptime
@@ -538,6 +589,7 @@ void loop() {
       refreshUI();
       lastOkRefresh = millis();
       lv_label_set_text(sysRefr, "Atualizado: agora");
+      if (splash) { lv_obj_del(splash); splash = nullptr; }
     } else {
       lv_label_set_text(sysRefr, "Atualizado: falha na leitura");
     }
