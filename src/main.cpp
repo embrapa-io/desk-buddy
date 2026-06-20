@@ -404,6 +404,7 @@ static bool fetchGatus() {
   String url = String("https://") + GATUS_HOST + GATUS_PATH;
   if (!https.begin(client, url)) return false;
   int code = https.GET();
+  Serial.printf("[Gatus] HTTP %d\n", code);
   bool ok = false;
   if (code == 200) {
     JsonDocument filter;
@@ -424,6 +425,7 @@ static bool fetchGatus() {
         addEp(nm, g, up, (uint16_t)min<uint32_t>(dur / 1000000UL, 65535));
       }
       dataFromGatus = true; ok = true;
+      Serial.printf("[Gatus] %d endpoints carregados\n", epCount);
     }
   }
   https.end();
@@ -435,6 +437,7 @@ static bool fetchGatus() {
 // =================================================================
 void setup() {
   Serial.begin(115200);
+  Serial.println("\n[DeskBuddy] boot");
   pinMode(LED_R, OUTPUT); pinMode(LED_G, OUTPUT); pinMode(LED_B, OUTPUT);
   digitalWrite(LED_R, HIGH); digitalWrite(LED_G, HIGH); digitalWrite(LED_B, HIGH);
 
@@ -489,6 +492,7 @@ void loop() {
     lv_label_set_text(sysWifi, conn ? "WiFi: " WIFI_SSID " (OK)" : "WiFi: conectando...");
     char ip[32]; snprintf(ip, sizeof(ip), "IP: %s", conn ? WiFi.localIP().toString().c_str() : "—");
     lv_label_set_text(sysIp, ip);
+    Serial.printf("[WiFi] %s %s\n", conn ? "conectado" : "desconectado", conn ? WiFi.localIP().toString().c_str() : "");
   }
 
   // uptime

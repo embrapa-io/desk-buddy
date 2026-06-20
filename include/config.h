@@ -3,9 +3,17 @@
 // ─────────────────────────────────────────────────────────────
 #pragma once
 
-// ---- WiFi (rede 2.4 GHz WPA2 simples) ----
-#define WIFI_SSID      "SUA_REDE_2G"
-#define WIFI_PASSWORD  "SUA_SENHA"
+// ---- WiFi (rede 2.4 GHz WPA2) ----
+// Credenciais reais ficam em include/secrets.h (gitignored). Sem ele, usa placeholders.
+#if defined(__has_include)
+#  if __has_include("secrets.h")
+#    include "secrets.h"
+#  endif
+#endif
+#ifndef WIFI_SSID
+#  define WIFI_SSID      "SUA_REDE_2G"
+#  define WIFI_PASSWORD  "SUA_SENHA"
+#endif
 
 // ---- Fonte de dados: Gatus (status.embrapa.io) ----
 // pageSize=1 → traz só a medição mais recente por endpoint (~14 KB, parseável no ESP32)

@@ -19,3 +19,6 @@ Thumbs.db
 
 # Instruções locais do harness (context-mode) — não fazem parte do produto
 CLAUDE.md
+
+# Credenciais (WiFi etc.) — nunca versionar
+include/secrets.h
