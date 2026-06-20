@@ -507,6 +507,7 @@ void loop() {
     char ip[32]; snprintf(ip, sizeof(ip), "IP: %s", conn ? WiFi.localIP().toString().c_str() : "—");
     lv_label_set_text(sysIp, ip);
     Serial.printf("[WiFi] %s %s\n", conn ? "conectado" : "desconectado", conn ? WiFi.localIP().toString().c_str() : "");
+    if (conn) configTzTime("<-03>3", "pool.ntp.org", "time.google.com", "a.st1.ntp.br");
   }
 
   // uptime
@@ -517,11 +518,16 @@ void loop() {
     char u[40]; snprintf(u, sizeof(u), "Uptime: %luh %02lum %02lus", s/3600, (s/60)%60, s%60);
     lv_label_set_text(sysUp, u);
     time_t nowt = time(nullptr);
+    static bool tprinted = false;
     if (nowt > 1700000000) {   // hora já sincronizada via NTP
       struct tm tmv; localtime_r(&nowt, &tmv);
       char cb[24]; snprintf(cb, sizeof(cb), "%d/%d/%02d  %02d:%02d",
         tmv.tm_mday, tmv.tm_mon + 1, (tmv.tm_year + 1900) % 100, tmv.tm_hour, tmv.tm_min);
       lv_label_set_text(lblClock, cb);
+      if (!tprinted) { tprinted = true; Serial.printf("[NTP] sincronizado: %s\n", cb); }
+    } else {
+      static unsigned long lastDbg = 0;
+      if (millis() - lastDbg > 3000) { lastDbg = millis(); Serial.printf("[NTP] aguardando sync (epoch=%ld)\n", (long)nowt); }
     }
   }
 
