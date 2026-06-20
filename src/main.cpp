@@ -297,7 +297,7 @@ static void addRow(lv_obj_t* box, const char* name, bool up, uint16_t ms) {
   lv_obj_t* st = lv_label_create(row);
   if (up) { char b[12]; snprintf(b, sizeof(b), "%u ms", ms); lv_label_set_text(st, b);
             lv_obj_set_style_text_color(st, COL_MUTED, 0); }
-  else    { lv_label_set_text(st, "fora"); lv_obj_set_style_text_color(st, COL_DOWN, 0); }
+  else    { lv_label_set_text(st, "off"); lv_obj_set_style_text_color(st, COL_DOWN, 0); }
   lv_obj_set_style_text_font(st, &lv_font_montserrat_12, 0);
 }
 
@@ -340,23 +340,25 @@ static void refreshUI() {
   for (int g = 0; g < G_COUNT; g++) {
     char b[16]; snprintf(b, sizeof(b), "%d/%d", up[g], tot[g]);
     lv_label_set_text(ovVal[g], b);
-    bool allUp = (up[g] == tot[g] && tot[g] > 0);
-    lv_obj_set_style_bg_color(ovDot[g], allUp ? COL_UP : COL_DOWN, 0);
-    lv_label_set_text(ovStat[g], allUp ? "no ar" : "incidente");
-    lv_obj_set_style_text_color(ovStat[g], allUp ? COL_UP : COL_DOWN, 0);
+    int gdown = tot[g] - up[g];
+    bool allUp = (gdown == 0 && tot[g] > 0);
+    lv_obj_set_style_bg_color(ovDot[g], allUp ? COL_UP : COL_WARN, 0);
+    if (allUp) { lv_label_set_text(ovStat[g], "Healthy"); }
+    else { char sb[12]; snprintf(sb, sizeof(sb), "%d off", gdown); lv_label_set_text(ovStat[g], sb); }
+    lv_obj_set_style_text_color(ovStat[g], allUp ? COL_UP : COL_WARN, 0);
   }
   // geral
   if (downTotal == 0) {
     lv_label_set_text(ovAllIcon, LV_SYMBOL_OK);
     lv_obj_set_style_text_color(ovAllIcon, COL_UP, 0);
-    lv_label_set_text(ovAllTxt, "Tudo no ar");
+    lv_label_set_text(ovAllTxt, "Healthy");
     lv_obj_set_style_text_color(ovAllTxt, COL_UP, 0);
   } else {
-    char b[20]; snprintf(b, sizeof(b), "%d fora", downTotal);
+    char b[20]; snprintf(b, sizeof(b), "%d off", downTotal);
     lv_label_set_text(ovAllIcon, LV_SYMBOL_WARNING);
-    lv_obj_set_style_text_color(ovAllIcon, COL_DOWN, 0);
+    lv_obj_set_style_text_color(ovAllIcon, COL_WARN, 0);
     lv_label_set_text(ovAllTxt, b);
-    lv_obj_set_style_text_color(ovAllTxt, COL_DOWN, 0);
+    lv_obj_set_style_text_color(ovAllTxt, COL_WARN, 0);
   }
   // listas (fora do ar primeiro)
   for (int g = 0; g < G_COUNT; g++) {
