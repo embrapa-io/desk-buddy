@@ -535,18 +535,18 @@ void setup() {
   splash = lv_obj_create(scr);
   lv_obj_remove_style_all(splash);
   lv_obj_set_size(splash, SCR_W, SCR_H);
-  lv_obj_set_style_bg_color(splash, lv_color_hex(0xF2F5F9), 0);
+  lv_obj_set_style_bg_color(splash, lv_color_hex(0xFFFFFF), 0);
   lv_obj_set_style_bg_opa(splash, LV_OPA_COVER, 0);
   lv_obj_clear_flag(splash, LV_OBJ_FLAG_SCROLLABLE);
   lv_obj_t* sem = lv_img_create(splash);
   lv_img_set_src(sem, &img_embrapa_color);
-  lv_obj_align(sem, LV_ALIGN_CENTER, 0, -40);
+  lv_obj_align(sem, LV_ALIGN_TOP_MID, 0, 16);            // margem do topo = margem de baixo do texto
   lv_obj_t* sio = lv_img_create(splash);
   lv_img_set_src(sio, &img_io_color);
-  lv_obj_align(sio, LV_ALIGN_CENTER, 0, 22);
+  lv_obj_align(sio, LV_ALIGN_CENTER, 0, 0);              // centralizada verticalmente na tela
   lv_obj_t* sp = lv_spinner_create(splash, 1000, 60);   // indicador de progresso
   lv_obj_set_size(sp, 26, 26);
-  lv_obj_align(sp, LV_ALIGN_BOTTOM_MID, 0, -38);
+  lv_obj_align(sp, LV_ALIGN_BOTTOM_MID, 0, -44);
   lv_obj_set_style_arc_width(sp, 3, LV_PART_MAIN);
   lv_obj_set_style_arc_width(sp, 3, LV_PART_INDICATOR);
   lv_obj_set_style_arc_color(sp, lv_color_hex(0xCBD3DE), LV_PART_MAIN);
@@ -555,7 +555,7 @@ void setup() {
   lv_label_set_text(scn, "Conectando ao Wi-Fi...");
   lv_obj_set_style_text_font(scn, &ui_font_12, 0);
   lv_obj_set_style_text_color(scn, lv_color_hex(0x5B6472), 0);
-  lv_obj_align(scn, LV_ALIGN_BOTTOM_MID, 0, -14);
+  lv_obj_align(scn, LV_ALIGN_BOTTOM_MID, 0, -16);
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
