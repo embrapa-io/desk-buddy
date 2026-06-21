@@ -32,6 +32,7 @@ LV_IMG_DECLARE(img_embrapa_color); // Embrapa colorida (splash)
 #define SYM_CLOCK "\xEF\x80\x97"   // relógio (U+F017) — uptime
 #define SYM_GLOBE "\xEF\x82\xAC"   // globo (U+F0AC) — IP/rede
 #define SYM_CHIP  "\xEF\x8B\x9B"   // microchip (U+F2DB) — firmware
+#define SYM_INFO  "\xEF\x81\x9A"   // info-circle (U+F05A)
 
 // ---------------- Display / Touch ----------------
 #define SCR_W 320
@@ -515,12 +516,10 @@ static void buildConfig(lv_obj_t* scr) {
   sldBright = lv_slider_create(r5);
   lv_slider_set_range(sldBright, 5, 100);
   lv_obj_set_flex_grow(sldBright, 1);
-  lv_obj_t* aut = lv_label_create(r5);
-  lv_label_set_text(aut, "Auto");
-  lv_obj_set_style_text_font(aut, &ui_font_12, 0);
-  lv_obj_set_style_text_color(aut, COL_MUTED, 0);
-  swAuto = lv_switch_create(r5);
-  lv_obj_set_size(swAuto, 40, 22);
+
+  lv_obj_t* r6 = cfgRow(form, "Auto");
+  swAuto = lv_switch_create(r6);
+  lv_obj_set_size(swAuto, 44, 24);
 
   // botões (fora do form, sempre no rodapé)
   lv_obj_t* cancel = lv_btn_create(cfgScreen);
@@ -553,8 +552,8 @@ static void buildSystem(lv_obj_t* scr) {
   page[4] = p;
   header(p);
   lv_obj_t* box = lv_obj_create(p);
-  lv_obj_set_size(box, SCR_W - 64 - 16, SCR_H - 28 - 8);   // 240 x 204
-  lv_obj_set_pos(box, 8, 28);
+  lv_obj_set_size(box, SCR_W - 64 - 16, SCR_H - 36 - 8);   // 240 x 196
+  lv_obj_set_pos(box, 8, 36);   // margem entre header e a lista
   flat(box);
   lv_obj_set_flex_flow(box, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_style_pad_row(box, 6, 0);
@@ -585,6 +584,25 @@ static void buildSystem(lv_obj_t* scr) {
   sysRefr = line(LV_SYMBOL_REFRESH, "Atualizado: nunca");
   lv_obj_t* fw = line(SYM_CHIP, "Firmware: " FW_VERSION);
   lv_obj_set_style_text_color(fw, COL_MUTED, 0);
+
+  // crédito (ícone de info) abaixo da versão
+  lv_obj_t* crow = lv_obj_create(box);
+  lv_obj_remove_style_all(crow);
+  lv_obj_set_width(crow, lv_pct(100));
+  lv_obj_set_height(crow, LV_SIZE_CONTENT);
+  lv_obj_set_flex_flow(crow, LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(crow, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_set_style_pad_column(crow, 6, 0);
+  lv_obj_t* cic = lv_label_create(crow);
+  lv_label_set_text(cic, SYM_INFO);
+  lv_obj_set_style_text_font(cic, &ui_font_12, 0);
+  lv_obj_set_style_text_color(cic, COL_MUTED, 0);
+  lv_obj_t* ctx = lv_label_create(crow);
+  lv_label_set_text(ctx, "Desenvolvido pela Embrapa Gado de Corte");
+  lv_obj_set_style_text_font(ctx, &ui_font_12, 0);
+  lv_obj_set_style_text_color(ctx, COL_MUTED, 0);
+  lv_obj_set_flex_grow(ctx, 1);
+  lv_label_set_long_mode(ctx, LV_LABEL_LONG_WRAP);
 
   // empurra o botão para o rodapé (usa o espaço livre)
   lv_obj_t* spacer = lv_obj_create(box);
@@ -788,7 +806,7 @@ void setup() {
   lv_obj_align(sio, LV_ALIGN_CENTER, 0, 0);              // centralizada verticalmente na tela
   lv_obj_t* sp = lv_spinner_create(splash, 1000, 60);   // indicador de progresso
   lv_obj_set_size(sp, 26, 26);
-  lv_obj_align(sp, LV_ALIGN_BOTTOM_MID, 0, -44);
+  lv_obj_align(sp, LV_ALIGN_BOTTOM_MID, 0, -56);
   lv_obj_set_style_arc_width(sp, 3, LV_PART_MAIN);
   lv_obj_set_style_arc_width(sp, 3, LV_PART_INDICATOR);
   lv_obj_set_style_arc_color(sp, lv_color_hex(0xCBD3DE), LV_PART_MAIN);
@@ -797,7 +815,12 @@ void setup() {
   lv_label_set_text(scn, "Conectando ao Wi-Fi...");
   lv_obj_set_style_text_font(scn, &ui_font_12, 0);
   lv_obj_set_style_text_color(scn, lv_color_hex(0x5B6472), 0);
-  lv_obj_align(scn, LV_ALIGN_BOTTOM_MID, 0, -16);
+  lv_obj_align(scn, LV_ALIGN_BOTTOM_MID, 0, -32);
+  lv_obj_t* scredit = lv_label_create(splash);
+  lv_label_set_text(scredit, "Desenvolvido pela Embrapa Gado de Corte");
+  lv_obj_set_style_text_font(scredit, &ui_font_12, 0);
+  lv_obj_set_style_text_color(scredit, lv_color_hex(0x9AA4B2), 0);
+  lv_obj_align(scredit, LV_ALIGN_BOTTOM_MID, 0, -12);
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(cfg.ssid.c_str(), cfg.pass.c_str());

@@ -30,4 +30,4 @@
 #define TS_MINY 240
 #define TS_MAXY 3800
 
-#define FW_VERSION "0.1-mockup"
+#define FW_VERSION "0.26.6-alpha.1"
