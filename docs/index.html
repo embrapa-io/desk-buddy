@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desk Buddy — Instalar firmware</title>
+<meta name="description" content="Grave o firmware do Desk Buddy (Embrapa I/O) no seu CYD direto pelo navegador.">
+<script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+<style>
+  :root{ --green:#00773D; --blue:#004994; --purple:#8001ff; --ink:#1c2230; --muted:#5b6472; --line:#e6e9ef; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+        color:var(--ink); background:#f6f8fb; line-height:1.55; }
+  .wrap{ max-width:760px; margin:0 auto; padding:32px 20px 56px; }
+  header{ text-align:center; margin-bottom:8px; }
+  header img{ height:30px; }
+  h1{ font-size:30px; margin:14px 0 6px; }
+  .tag{ color:var(--muted); font-size:17px; margin:0 0 22px; text-align:center; }
+  .hero{ display:block; width:100%; max-width:480px; margin:0 auto 28px; border-radius:14px;
+         box-shadow:0 10px 30px rgba(20,30,60,.15); }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:26px;
+         box-shadow:0 6px 20px rgba(20,30,60,.06); text-align:center; }
+  .card h2{ margin:0 0 6px; font-size:20px; }
+  .install{ margin:18px 0 8px; }
+  esp-web-install-button{ --esp-tools-button-color:#fff; --esp-tools-button-background-color:var(--green); }
+  .btn{ display:inline-block; background:var(--green); color:#fff; border:0; border-radius:10px;
+        font-size:17px; font-weight:600; padding:13px 26px; cursor:pointer; }
+  .note{ color:var(--muted); font-size:14px; margin-top:12px; }
+  .warn{ display:block; background:#fff6e6; border:1px solid #f0d28a; color:#7a5b13;
+         border-radius:10px; padding:12px 14px; font-size:14px; margin-top:10px; }
+  ol{ text-align:left; color:var(--ink); padding-left:22px; }
+  ol li{ margin:7px 0; }
+  .steps{ margin-top:26px; }
+  footer{ text-align:center; color:var(--muted); font-size:13px; margin-top:34px; }
+  a{ color:var(--blue); }
+  code{ background:#eef1f6; padding:1px 6px; border-radius:5px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img src="../assets/embrapa.io.svg" alt="embrapa.io">
+      <h1>Desk Buddy</h1>
+    </header>
+    <p class="tag">Grave o firmware no seu Cheap Yellow Display — direto do navegador.</p>
+
+    <img class="hero" src="images/using.gif" alt="Desk Buddy em uso">
+
+    <div class="card">
+      <h2>⚡ Instalar agora</h2>
+      <p class="note">Conecte o CYD ao computador por USB e clique no botão.</p>
+      <div class="install">
+        <esp-web-install-button manifest="manifest.json">
+          <button class="btn" slot="activate">⚡ Instalar firmware</button>
+          <span slot="unsupported" class="warn">Seu navegador não suporta a gravação. Use o
+            <b>Google Chrome</b> ou o <b>Microsoft Edge</b> em um <b>computador</b>
+            (a tecnologia Web Serial não funciona em Safari, Firefox ou celular).</span>
+          <span slot="not-allowed" class="warn">É necessário acessar esta página por <b>HTTPS</b>.</span>
+        </esp-web-install-button>
+      </div>
+      <p class="note">Ao instalar, escolha a opção de <b>apagar o dispositivo</b> (instalação limpa).</p>
+    </div>
+
+    <div class="card steps">
+      <h2>Passo a passo</h2>
+      <ol>
+        <li>Conecte o <b>CYD direto numa porta USB</b> do computador (evite hubs/docks), com um <b>cabo USB-C de dados</b>.</li>
+        <li>Clique em <b>Instalar firmware</b> e selecione a porta serial (algo como <code>usbserial</code> / <code>wchusbserial</code>).</li>
+        <li>Aguarde a gravação terminar e o aparelho reiniciar.</li>
+        <li>Na primeira vez, o Desk Buddy abre a tela de <b>Configuração</b>: informe seu <b>Wi-Fi 2,4 GHz</b> pela tela de toque. Pronto! ✅</li>
+      </ol>
+    </div>
+
+    <footer>
+      Código-fonte e documentação:
+      <a href="https://github.com/embrapa-io/desk-buddy">github.com/embrapa-io/desk-buddy</a><br>
+      MIT · Desenvolvido pela <b>Embrapa Gado de Corte</b>
+    </footer>
+  </div>
+</body>
+</html>

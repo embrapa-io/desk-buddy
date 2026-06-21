@@ -62,10 +62,10 @@ Usamos o modelo **CYD Desk Buddy** da comunidade (MakerWorld):
 
 ## 🔧 Instalando o firmware
 
-> **Gravador web (1 clique, sem instalar nada): _em preparação_** — acompanhe os [**Releases**](../../releases).
+> **Gravador web — 1 clique, sem instalar nada:** abra **[buddy.embrapa.io](https://buddy.embrapa.io)**
+> no **Google Chrome** ou **Microsoft Edge** (no computador), conecte o CYD por USB e clique em **Instalar**.
 
-Para instalar agora (ou para customizar), use o PlatformIO — passo a passo em
-**[docs/tech-spec.md](docs/tech-spec.md)**.
+Quer compilar do código ou customizar? Veja **[docs/tech-spec.md](docs/tech-spec.md)**.
 
 **Na primeira vez que ligar**, o Desk Buddy abre sozinho a tela de **Configuração**: digite o nome e
 a senha do seu **Wi-Fi (2,4 GHz)** pela tela de toque, salve, e pronto — ele se conecta e começa a

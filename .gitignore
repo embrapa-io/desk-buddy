@@ -12,6 +12,8 @@
 *.bin
 *.elf
 *.map
+# binário público do gravador web (distribuição, não é artefato de build)
+!docs/firmware/*.bin
 
 # OS
 .DS_Store
