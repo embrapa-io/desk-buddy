@@ -555,6 +555,7 @@ static void buildSystem(lv_obj_t* scr) {
   lv_obj_set_size(box, SCR_W - 64 - 16, SCR_H - 36 - 8);   // 240 x 196
   lv_obj_set_pos(box, 8, 36);   // margem entre header e a lista
   flat(box);
+  lv_obj_clear_flag(box, LV_OBJ_FLAG_SCROLLABLE);
   lv_obj_set_flex_flow(box, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_style_pad_row(box, 6, 0);
 
@@ -585,24 +586,11 @@ static void buildSystem(lv_obj_t* scr) {
   lv_obj_t* fw = line(SYM_CHIP, "Firmware: " FW_VERSION);
   lv_obj_set_style_text_color(fw, COL_MUTED, 0);
 
-  // crédito (ícone de info) abaixo da versão
-  lv_obj_t* crow = lv_obj_create(box);
-  lv_obj_remove_style_all(crow);
-  lv_obj_set_width(crow, lv_pct(100));
-  lv_obj_set_height(crow, LV_SIZE_CONTENT);
-  lv_obj_set_flex_flow(crow, LV_FLEX_FLOW_ROW);
-  lv_obj_set_flex_align(crow, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-  lv_obj_set_style_pad_column(crow, 6, 0);
-  lv_obj_t* cic = lv_label_create(crow);
-  lv_label_set_text(cic, SYM_INFO);
-  lv_obj_set_style_text_font(cic, &ui_font_12, 0);
-  lv_obj_set_style_text_color(cic, COL_MUTED, 0);
-  lv_obj_t* ctx = lv_label_create(crow);
-  lv_label_set_text(ctx, "Desenvolvido pela Embrapa Gado de Corte");
-  lv_obj_set_style_text_font(ctx, &ui_font_12, 0);
-  lv_obj_set_style_text_color(ctx, COL_MUTED, 0);
-  lv_obj_set_flex_grow(ctx, 1);
-  lv_label_set_long_mode(ctx, LV_LABEL_LONG_WRAP);
+  // crédito (copyright) abaixo da versão
+  lv_obj_t* credit = lv_label_create(box);
+  lv_label_set_text(credit, "© Embrapa Gado de Corte");
+  lv_obj_set_style_text_font(credit, &ui_font_12, 0);
+  lv_obj_set_style_text_color(credit, COL_MUTED, 0);
 
   // empurra o botão para o rodapé (usa o espaço livre)
   lv_obj_t* spacer = lv_obj_create(box);
