@@ -586,10 +586,8 @@ static void buildSystem(lv_obj_t* scr) {
   lv_obj_t* fw = line(SYM_CHIP, "Firmware: " FW_VERSION);
   lv_obj_set_style_text_color(fw, COL_MUTED, 0);
 
-  // crédito (copyright) abaixo da versão
-  lv_obj_t* credit = lv_label_create(box);
-  lv_label_set_text(credit, "© Embrapa Gado de Corte");
-  lv_obj_set_style_text_font(credit, &ui_font_12, 0);
+  // crédito: © como ícone verde (igual às demais linhas) + texto
+  lv_obj_t* credit = line("©", "Embrapa Gado de Corte");
   lv_obj_set_style_text_color(credit, COL_MUTED, 0);
 
   // empurra o botão para o rodapé (usa o espaço livre)
