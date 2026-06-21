@@ -1,51 +1,84 @@
-# Desk Buddy — Painel de status Embrapa I/O (CYD/ESP32)
+<h1 align="center">🖥️ Desk Buddy — Embrapa I/O</h1>
 
-Dispositivo de mesa que mostra a **saúde da plataforma Embrapa I/O** (clusters, hosts e serviços)
-lendo a API do **Gatus** em [status.embrapa.io](https://status.embrapa.io), num **Cheap Yellow Display
-(ESP32-2432S028R)**. Navegação por toque, splash com a marca e **configuração on-screen**.
+<p align="center">
+  <b>Um painel de mesa que mostra, em tempo real, a saúde da plataforma <a href="https://status.embrapa.io">Embrapa I/O</a></b><br>
+  clusters, hosts e serviços — num pequeno display colorido com toque.
+</p>
 
-> **Status:** v1 funcional no hardware (`0.26.6-alpha.1`).
+<p align="center">
+  <img src="docs/images/using.gif" width="520" alt="Desk Buddy em uso">
+</p>
 
-## Recursos
-- **Dashboard ao vivo** do Gatus: Visão Geral (tiles), Clusters, Hosts, Serviços — status + latência (`Healthy` / `N off`).
-- **Header** com logo `embrapa.io` + relógio/data (hora obtida do header HTTP `Date` do Gatus, fuso configurável).
-- **Splash** no boot com as logos Embrapa / embrapa.io.
-- **Tela Sistema → Configurar** (teclado na tela): Wi-Fi, fuso, intervalo e brilho — persistidos em **NVS**.
-- **Brilho** por PWM + automático via LDR. **LED RGB** como farol de status.
+<p align="center">
+  <img alt="Licença MIT" src="https://img.shields.io/badge/licen%C3%A7a-MIT-green">
+  &nbsp;<img alt="Plataforma" src="https://img.shields.io/badge/hardware-ESP32%20CYD-blue">
+</p>
 
-## Stack
-Arduino (ESP32 core 3.3) + **TFT_eSPI** + **LVGL 8.4** + **XPT2046_Touchscreen** + **ArduinoJson 7** + **Preferences** (PlatformIO).
+---
 
-## Estrutura
-```
-platformio.ini        build (pinos do CYD via build_flags; partição huge_app)
-include/config.h      Gatus, intervalo, calibração do touch, versão
-include/lv_conf.h     configuração do LVGL (heap do sistema)
-include/secrets.h     Wi-Fi local — GITIGNORED (opcional; default é em branco)
-src/main.cpp          app (drivers, telas, Gatus, configuração)
-src/ui_font_*.c       fontes Montserrat (acentos PT-BR + ícones)
-src/img_*.c           logos em bitmap LVGL
-tools/                geradores de assets (logos, fontes)
-mockups/index.html    mockup visual das telas
-```
+## O que é
 
-## Compilar e gravar
-1. Instale o [PlatformIO](https://platformio.org/).
-2. (Opcional) Crie `include/secrets.h` com `WIFI_SSID`/`WIFI_PASSWORD` para a build conectar direto.
-   Sem ele, o aparelho sobe **sem rede e abre a tela de Configuração** para você informar o Wi-Fi pelo toque.
-3. Conecte o CYD **direto numa porta USB do computador** (dock/hub pode não enumerar o CH340), com um **cabo USB-C de dados**.
-4. Grave:
-   ```bash
-   pio run -t upload          # upload_speed 460800 (CH340)
-   pio device monitor         # 115200
-   ```
-   Não precisa segurar BOOT (auto-reset).
+O **Desk Buddy** fica na sua mesa e, sem que você precise abrir nada, mostra se a **plataforma
+Embrapa I/O está no ar**. Ele lê o monitoramento oficial (**Gatus**, em
+[status.embrapa.io](https://status.embrapa.io)) e exibe o estado de **clusters**, **hosts** e
+**serviços** com a mesma linguagem do painel (`Healthy` / `N off`). Tem **navegação por toque**,
+**relógio**, e é **configurado pela própria tela** (Wi-Fi, fuso, brilho) — sem cabo nem computador.
 
-## Regenerar assets (opcional)
-```bash
-node tools/gen_logos.mjs && python3 tools/png2lvgl.py   # logos SVG -> bitmap LVGL
-bash tools/gen_fonts.sh                                  # fontes (acentos + ícones)
-```
+É feito com um **Cheap Yellow Display (CYD / ESP32)** dentro de um case impresso em 3D. Sempre
+ligado, alimentado por USB.
 
-## Dados (Gatus)
-`GET /api/v1/endpoints/statuses?page=1&pageSize=1` (~14 KB) → filtro do ArduinoJson (só `name`, `group`, `success`, `duration`). Refresh configurável.
+## As telas
+
+| | |
+|---|---|
+| <img src="docs/images/20260621_010418.jpg" width="330"> | **Visão Geral** — um resumo de tudo: Clusters, Hosts, Serviços e o veredito **Geral**, cada um com quantos estão no ar e o status (`Healthy` / `N off`). |
+| <img src="docs/images/20260621_010428.jpg" width="330"> | **Clusters** — lista dos clusters com indicador de status e a latência de cada um. |
+| <img src="docs/images/20260621_010435.jpg" width="330"> | **Hosts** — lista dos hosts monitorados (rolável), com status e latência. |
+| <img src="docs/images/20260621_010443.jpg" width="330"> | **Serviços** — lista dos serviços; o que estiver fora do ar aparece em destaque no topo. |
+| <img src="docs/images/20260621_010450.jpg" width="330"> | **Sistema** — Wi-Fi/IP, tempo ligado, última atualização, versão e o botão **Configurar**. |
+
+> A navegação é pelo **menu lateral** (Geral · Clusters · Hosts · Serviços · Sistema).
+
+## 🛒 O que você vai precisar
+
+| Item | Onde comprar | Preço aprox. |
+|---|---|---|
+| **Placa CYD** (ESP32-2432S028R, 2.8" touch) | [AliExpress](https://pt.aliexpress.com/item/1005011857768315.html) | ~US$ 10 + impostos |
+| **Conector USB-C fêmea com DuPont** (alimentação) | [AliExpress](https://pt.aliexpress.com/item/1005005823388148.html) | ~US$ 0,50/un (kit de 10) + impostos |
+| Carregador **USB 5 V** + cabo USB-C | (provavelmente você já tem) | — |
+
+> O conector USB-C já vem com plugue **DuPont**, que encaixa nos jumpers que acompanham a placa —
+> liga em **VIN (+5 V)** e **GND**. **Confira a polaridade** antes de energizar. Detalhes em
+> [docs/tech-spec.md](docs/tech-spec.md).
+
+## 🖨️ Imprimindo o case
+
+Usamos o modelo **CYD Desk Buddy** da comunidade (MakerWorld):
+**https://makerworld.com/pt/models/2787810-cyd-desk-buddy-for-bambu-lab-home-assistant**
+
+<p align="center">
+  <img src="docs/images/case-3d-print.gif" width="420" alt="Impressão 3D do case">
+</p>
+
+## 🔧 Instalando o firmware
+
+> **Gravador web (1 clique, sem instalar nada): _em preparação_** — acompanhe os [**Releases**](../../releases).
+
+Para instalar agora (ou para customizar), use o PlatformIO — passo a passo em
+**[docs/tech-spec.md](docs/tech-spec.md)**.
+
+**Na primeira vez que ligar**, o Desk Buddy abre sozinho a tela de **Configuração**: digite o nome e
+a senha do seu **Wi-Fi (2,4 GHz)** pela tela de toque, salve, e pronto — ele se conecta e começa a
+mostrar o status. Depois, dá para trocar Wi-Fi, fuso horário, intervalo de atualização e brilho a
+qualquer momento em **Sistema → Configurar**.
+
+## 🛠️ Quer customizar?
+
+O firmware é aberto e dá para adaptar (outra fonte de dados, cores, telas, fusos). Veja a
+**[documentação técnica](docs/tech-spec.md)**.
+
+## Licença e créditos
+
+[MIT](LICENSE) · Desenvolvido pela **Embrapa Gado de Corte**.
+Usa [LVGL](https://lvgl.io), [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI) e a API do
+[Gatus](https://github.com/TwiN/gatus).
