@@ -32,7 +32,8 @@ LV_IMG_DECLARE(img_embrapa_color); // Embrapa colorida (splash)
 #define SYM_CLOCK "\xEF\x80\x97"   // relógio (U+F017) — uptime
 #define SYM_GLOBE "\xEF\x82\xAC"   // globo (U+F0AC) — IP/rede
 #define SYM_CHIP  "\xEF\x8B\x9B"   // microchip (U+F2DB) — firmware
-#define SYM_INFO  "\xEF\x81\x9A"   // info-circle (U+F05A)
+#define SYM_INFO    "\xEF\x81\x9A"   // info-circle (U+F05A)
+#define SYM_CLUSTER "\xEF\x9B\xBF"   // network-wired (U+F6FF) — cluster de servidores
 
 // ---------------- Display / Touch ----------------
 #define SCR_W 320
@@ -212,7 +213,7 @@ static void nav_cb(lv_event_t* e) {
 // =================================================================
 //  Construção da UI
 // =================================================================
-static const char* NAV_ICON[5] = { LV_SYMBOL_HOME, LV_SYMBOL_DRIVE, LV_SYMBOL_LIST, LV_SYMBOL_GPS, LV_SYMBOL_SETTINGS };
+static const char* NAV_ICON[5] = { LV_SYMBOL_HOME, SYM_CLUSTER, LV_SYMBOL_LIST, LV_SYMBOL_GPS, LV_SYMBOL_SETTINGS };
 static const char* NAV_TXT[5]  = { "Geral", "Clusters", "Hosts", "Serviços", "Sistema" };
 
 // Barra do header (apenas logo embrapa.io à esq. + relógio/data à dir.),
@@ -258,7 +259,7 @@ static void buildNav(lv_obj_t* scr) {
 
     lv_obj_t* ic = lv_label_create(b);
     lv_label_set_text(ic, NAV_ICON[i]);
-    lv_obj_set_style_text_font(ic, &lv_font_montserrat_16, 0);
+    lv_obj_set_style_text_font(ic, &ui_font_16, 0);
     lv_obj_t* tx = lv_label_create(b);
     lv_label_set_text(tx, NAV_TXT[i]);
     lv_obj_set_style_text_font(tx, &ui_font_12, 0);
