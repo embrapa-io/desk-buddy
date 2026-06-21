@@ -435,7 +435,7 @@ static void save_cb(lv_event_t* e) {
   lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(cfgScreen, LV_OBJ_FLAG_HIDDEN);
 }
-static void openCfg_cb(lv_event_t* e) {
+static void openConfig() {
   lv_textarea_set_text(taSsid, cfg.ssid.c_str());
   lv_textarea_set_text(taPass, cfg.pass.c_str());
   lv_dropdown_set_selected(ddTz, tzIdx());
@@ -446,6 +446,7 @@ static void openCfg_cb(lv_event_t* e) {
   lv_obj_clear_flag(cfgScreen, LV_OBJ_FLAG_HIDDEN);
   lv_obj_move_foreground(cfgScreen);
 }
+static void openCfg_cb(lv_event_t* e) { openConfig(); }
 
 static void buildConfig(lv_obj_t* scr) {
   cfgScreen = lv_obj_create(scr);
@@ -807,6 +808,12 @@ void setup() {
   lv_obj_set_style_text_font(scredit, &ui_font_12, 0);
   lv_obj_set_style_text_color(scredit, lv_color_hex(0x9AA4B2), 0);
   lv_obj_align(scredit, LV_ALIGN_BOTTOM_MID, 0, -12);
+
+  // unidade sem Wi-Fi configurado (nova/distribuída) → abre a Configuração direto
+  if (cfg.ssid.length() == 0) {
+    if (splash) { lv_obj_del(splash); splash = nullptr; }
+    openConfig();
+  }
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(cfg.ssid.c_str(), cfg.pass.c_str());

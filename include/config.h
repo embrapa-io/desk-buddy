@@ -10,9 +10,11 @@
 #    include "secrets.h"
 #  endif
 #endif
+// Default de distribuição: EM BRANCO. Sem secrets.h, o aparelho sobe sem rede
+// e abre a tela de Configuração no boot para o usuário informar o Wi-Fi.
 #ifndef WIFI_SSID
-#  define WIFI_SSID      "SUA_REDE_2G"
-#  define WIFI_PASSWORD  "SUA_SENHA"
+#  define WIFI_SSID      ""
+#  define WIFI_PASSWORD  ""
 #endif
 
 // ---- Fonte de dados: Gatus (status.embrapa.io) ----
