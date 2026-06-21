@@ -1,47 +1,51 @@
 # Desk Buddy — Painel de status Embrapa I/O (CYD/ESP32)
 
-Painel de mesa que mostra a saúde da plataforma **Embrapa I/O** (clusters, hosts e serviços)
+Dispositivo de mesa que mostra a **saúde da plataforma Embrapa I/O** (clusters, hosts e serviços)
 lendo a API do **Gatus** em [status.embrapa.io](https://status.embrapa.io), num **Cheap Yellow Display
-(ESP32-2432S028R)**. Navegação por toque com **menu lateral de 5 telas**.
+(ESP32-2432S028R)**. Navegação por toque, splash com a marca e **configuração on-screen**.
 
-> **Status: v0 (mockup flasheável).** As telas, a navegação por toque e a leitura ao vivo do Gatus
-> estão implementadas. É um ponto de partida para **validar em hardware** (compilar, flashear,
-> e principalmente **calibrar o touch**). Documentação completa no Obsidian:
-> `Projetos/Embrapa IO/Desk Buddy/`.
+> **Status:** v1 funcional no hardware (`0.26.6-alpha.1`).
+
+## Recursos
+- **Dashboard ao vivo** do Gatus: Visão Geral (tiles), Clusters, Hosts, Serviços — status + latência (`Healthy` / `N off`).
+- **Header** com logo `embrapa.io` + relógio/data (hora obtida do header HTTP `Date` do Gatus, fuso configurável).
+- **Splash** no boot com as logos Embrapa / embrapa.io.
+- **Tela Sistema → Configurar** (teclado na tela): Wi-Fi, fuso, intervalo e brilho — persistidos em **NVS**.
+- **Brilho** por PWM + automático via LDR. **LED RGB** como farol de status.
 
 ## Stack
-Arduino + **TFT_eSPI** + **LVGL 8.3** + **XPT2046_Touchscreen** + **ArduinoJson 7** (via PlatformIO).
+Arduino (ESP32 core 3.3) + **TFT_eSPI** + **LVGL 8.4** + **XPT2046_Touchscreen** + **ArduinoJson 7** + **Preferences** (PlatformIO).
 
 ## Estrutura
 ```
-platformio.ini        Config do build (pinos do CYD via build_flags — não precisa editar a TFT_eSPI)
-include/config.h      WiFi, URL do Gatus, intervalo, calibração do touch  ← EDITAR
-include/lv_conf.h     Configuração do LVGL
-src/main.cpp          Drivers + UI (menu lateral, 5 telas) + fetch do Gatus
-mockups/              Mockups visuais 320×240 (SVG + index.html) para revisar o layout
+platformio.ini        build (pinos do CYD via build_flags; partição huge_app)
+include/config.h      Gatus, intervalo, calibração do touch, versão
+include/lv_conf.h     configuração do LVGL (heap do sistema)
+include/secrets.h     Wi-Fi local — GITIGNORED (opcional; default é em branco)
+src/main.cpp          app (drivers, telas, Gatus, configuração)
+src/ui_font_*.c       fontes Montserrat (acentos PT-BR + ícones)
+src/img_*.c           logos em bitmap LVGL
+tools/                geradores de assets (logos, fontes)
+mockups/index.html    mockup visual das telas
 ```
 
-## Como compilar e flashear
-1. Instale o [PlatformIO](https://platformio.org/) (extensão do VS Code ou CLI `pio`).
-2. Edite **`include/config.h`**: `WIFI_SSID`, `WIFI_PASSWORD` (rede **2,4 GHz** WPA2).
-3. Conecte o CYD por USB. No macOS pode ser necessário o **driver CH340**.
-4. Compile e grave:
+## Compilar e gravar
+1. Instale o [PlatformIO](https://platformio.org/).
+2. (Opcional) Crie `include/secrets.h` com `WIFI_SSID`/`WIFI_PASSWORD` para a build conectar direto.
+   Sem ele, o aparelho sobe **sem rede e abre a tela de Configuração** para você informar o Wi-Fi pelo toque.
+3. Conecte o CYD **direto numa porta USB do computador** (dock/hub pode não enumerar o CH340), com um **cabo USB-C de dados**.
+4. Grave:
    ```bash
-   pio run -t upload
-   pio device monitor      # 115200 — mostra logs e x/y crus do touch
+   pio run -t upload          # upload_speed 460800 (CH340)
+   pio device monitor         # 115200
    ```
+   Não precisa segurar BOOT (auto-reset).
 
-## Calibração do touch
-Os valores `TS_MINX/MAXX/MINY/MAXY` em `config.h` são aproximados. Ao tocar nos cantos da tela,
-observe os valores crus no Serial Monitor e ajuste até o toque casar com os botões.
-
-## As 5 telas
-1. **Geral** — tiles Clusters / Hosts / Serviços (up/total) + veredito global.
-2. **Clusters** (6) · 3. **Hosts** (12) · 4. **Serviços** (25) — listas com status + latência (fora do ar no topo).
-5. **Sistema** — WiFi/IP, uptime, última atualização, versão.
-
-O **LED RGB** da placa funciona como farol: 🟢 tudo no ar · 🔴 algo fora.
+## Regenerar assets (opcional)
+```bash
+node tools/gen_logos.mjs && python3 tools/png2lvgl.py   # logos SVG -> bitmap LVGL
+bash tools/gen_fonts.sh                                  # fontes (acentos + ícones)
+```
 
 ## Dados (Gatus)
-`GET https://status.embrapa.io/api/v1/endpoints/statuses?page=1&pageSize=1` → ~14 KB,
-parseado com **filtro do ArduinoJson** (só `name`, `group`, `success`, `duration`). Refresh a cada 60 s.
+`GET /api/v1/endpoints/statuses?page=1&pageSize=1` (~14 KB) → filtro do ArduinoJson (só `name`, `group`, `success`, `duration`). Refresh configurável.
