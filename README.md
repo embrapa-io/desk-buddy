@@ -73,6 +73,14 @@ Usamos o modelo **CYD Desk Buddy** da comunidade (MakerWorld):
 > **Gravador web — 1 clique, sem instalar nada:** abra **[buddy.embrapa.io](https://buddy.embrapa.io)**
 > no **Google Chrome** ou **Microsoft Edge** (no computador), conecte o CYD por USB e clique em **Instalar**.
 
+**Já tem um Desk Buddy e quer atualizar?** O mesmo gravador serve. Ele regrava tudo, inclusive a
+configuração: depois da atualização, o aparelho pede o Wi-Fi de novo. Para atualizar mantendo a
+configuração, grave pelo PlatformIO (`pio run -t upload`).
+
+**A porta serial não aparece?** O computador não está vendo a placa. Ligue direto numa porta USB (sem
+hub nem dock) e troque o cabo: muitos só carregam. Mais dicas em
+[docs/tech-spec.md](docs/tech-spec.md#gravação--pontos-de-atenção-cydch340).
+
 Quer compilar do código ou customizar? Veja **[docs/tech-spec.md](docs/tech-spec.md)**.
 
 **Na primeira vez que ligar**, o Desk Buddy abre sozinho a tela de **Configuração**: digite o nome e

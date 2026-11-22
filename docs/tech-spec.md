@@ -21,6 +21,7 @@ src/ui_font_12/14/16.c    fontes Montserrat (acentos PT-BR + ícones FontAwesome
 src/img_*.c               logos em bitmap LVGL
 tools/                    geradores de assets (gen_logos.mjs, png2lvgl.py, gen_fonts.sh)
 tools/sim/                simulador: roda o firmware no computador e grava as telas (Docker)
+tools/release.sh          gera o binário público do gravador web (sem o secrets.h)
 assets/                   logos em SVG (fonte dos bitmaps)
 docs/                     README assets, mockup das telas (mockups.html)
 ```
@@ -39,10 +40,34 @@ docs/                     README assets, mockup das telas (mockups.html)
    pio run -t upload          # upload_speed 460800
    pio device monitor         # 115200
    ```
+   Gravar assim **mantém a configuração** do aparelho (Wi-Fi, fuso, brilho): só o firmware é regravado.
+
+O `platformio.ini` tem dois ambientes: **`cyd`** (o padrão, da bancada, que embute o `secrets.h`) e
+**`release`** (o público, que ignora o `secrets.h`).
+
+## Publicar o binário do gravador web
+O [buddy.embrapa.io](https://buddy.embrapa.io) grava o `docs/firmware/desk-buddy.bin`, na versão do
+`docs/manifest.json`. Depois de validar o firmware na placa:
+
+```bash
+tools/release.sh           # compila o env release, confere e grava o binário + a versão do manifesto
+git add docs && git commit && git push    # o GitHub Pages publica
+```
+
+- **Nunca copie o firmware do env `cyd` para `docs/firmware`:** ele leva embutidos o nome e a senha do Wi-Fi
+  do `secrets.h`. O script compila sem o arquivo e recusa a publicação se achar algum valor dele no binário.
+- O binário é uma imagem única, gravada a partir do endereço 0 (bootloader, partições e app). Ela cobre a
+  área da NVS (`0x9000`), então **atualizar pelo gravador web zera a configuração**: o aparelho volta a
+  pedir o Wi-Fi. Para manter a configuração, a gravação é pelo PlatformIO.
 
 ## Gravação — pontos de atenção (CYD/CH340)
 - **Conecte o CYD direto numa porta USB do computador** — dock/hub costuma **não enumerar** o CH340.
 - Use um **cabo USB-C de dados** (não "charge-only").
+- **A porta não aparece?** Então o computador não está vendo a placa (não é driver: o macOS já traz o do
+  CH340). Troque o cabo, mesmo que ele funcione com outro aparelho; se a placa tiver também a micro-USB,
+  tente por ela; e, num cabo USB-C↔USB-C, tente um USB-A→USB-C (há placas sem os resistores de
+  identificação no conector USB-C, que só enumeram assim).
+- O conector USB-C do **case** só alimenta (2 fios): a gravação é sempre pela porta USB da própria placa.
 - Porta serial: `/dev/cu.usbserial-*` (macOS) — chip **CH340** (VID:PID `1A86:7523`).
 - **`upload_speed = 460800`** — 921600 é instável no CH340 ("chip stopped responding").
 - **Não** precisa segurar BOOT (auto-reset por DTR/RTS).

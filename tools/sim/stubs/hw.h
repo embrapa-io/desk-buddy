@@ -38,6 +38,7 @@ struct Preferences {
   void begin(const char*, bool) {}
   void end() {}
   String getString(const char* k, const char* def) {
+    if (std::getenv("SIM_FIRST_BOOT")) return String(def);   // aparelho novo: NVS vazia
     if (!std::strcmp(k, "ssid")) return String("Rede-Exemplo-2G");
     if (!std::strcmp(k, "pass")) return String("senha-exemplo");
     return String(def);

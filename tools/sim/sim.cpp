@@ -75,6 +75,15 @@ static void shot(const char* name) {
 int main() {
   setvbuf(stdout, nullptr, _IOLBF, 0);
 
+  if (std::getenv("SIM_FIRST_BOOT")) {
+    std::puts("== 0. primeiro boot (sem Wi-Fi configurado): abre a Configuração e não tenta conectar");
+    setup();
+    run(20000); shot("00-primeiro-boot");
+    tap(70, 220); shot("00-primeiro-boot-cancelado");
+    std::printf("%8lu  (sim) WiFi.begin=%d\n", millis(), WiFi.begins);
+    return 0;
+  }
+
   std::puts("== 1. boot sem AP ao alcance: o vigia tenta de novo (15 s, 30 s, 60 s, com rádio na 4ª)");
   WiFi.apInRange = false;
   setup();

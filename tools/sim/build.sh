@@ -3,7 +3,7 @@
 set -e
 L=/src/.pio/libdeps/cyd
 [ -d "$L/lvgl/src" ] || { echo "Faltam as bibliotecas: rode 'pio run' uma vez antes (baixa o LVGL e o ArduinoJson)."; exit 1; }
-INC="-I/sim/stubs -I/src/include -I$L/lvgl -I$L/lvgl/src -I$L/ArduinoJson/src -DLV_CONF_INCLUDE_SIMPLE"
+INC="-I/sim/stubs -I/src/include -I$L/lvgl -I$L/lvgl/src -I$L/ArduinoJson/src -DLV_CONF_INCLUDE_SIMPLE -DPUBLIC_BUILD=1"
 mkdir -p /sim/build/lv /sim/out
 if [ ! -f /sim/build/liblvgl.a ]; then
   find "$L/lvgl/src" -name '*.c' | xargs -P 8 -I{} sh -c 'gcc -O1 -w '"$INC"' -c "$1" -o /sim/build/lv/$(echo "$1" | md5sum | cut -c1-12).o' _ {}
@@ -17,4 +17,5 @@ g++ -o /sim/build/sim /sim/build/main.o /sim/build/sim.o /sim/build/*.c.o /sim/b
 node -e 'const fs=require("fs");const d=JSON.parse(fs.readFileSync("/sim/gatus.json","utf8"));for(const e of d)if(e.name==="storage.agro.rocks"||e.name==="Sentry")e.results[0].success=false;fs.writeFileSync("/sim/build/gatus-down.json",JSON.stringify(d));'
 rm -f /sim/out/*.bmp /sim/out/*.png
 /sim/build/sim
+SIM_FIRST_BOOT=1 /sim/build/sim
 node /sim/png.mjs /sim/out
