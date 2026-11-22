@@ -30,3 +30,7 @@ node_modules/
 package.json
 package-lock.json
 tools/*.png
+
+# Simulador (tools/sim/run.sh): compilação e telas geradas
+tools/sim/build/
+tools/sim/out/

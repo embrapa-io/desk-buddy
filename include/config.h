@@ -32,4 +32,4 @@
 #define TS_MINY 240
 #define TS_MAXY 3800
 
-#define FW_VERSION "0.26.6-alpha.1"
+#define FW_VERSION "0.26.11-alpha.1"

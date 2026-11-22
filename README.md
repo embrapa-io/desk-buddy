@@ -2,7 +2,7 @@
 
 <p align="center">
   <b>Um painel de mesa que mostra, em tempo real, a saúde da plataforma <a href="https://status.embrapa.io">Embrapa I/O</a></b><br>
-  clusters, hosts e serviços — num pequeno display colorido com toque.
+  clusters, hosts, serviços, painéis e servidores de GPU — num pequeno display colorido com toque.
 </p>
 
 <p align="center">
@@ -20,9 +20,10 @@
 
 O **Desk Buddy** fica na sua mesa e, sem que você precise abrir nada, mostra se a **plataforma
 Embrapa I/O está no ar**. Ele lê o monitoramento oficial (**Gatus**, em
-[status.embrapa.io](https://status.embrapa.io)) e exibe o estado de **clusters**, **hosts** e
-**serviços** com a mesma linguagem do painel (`Healthy` / `N off`). Tem **navegação por toque**,
-**relógio**, e é **configurado pela própria tela** (Wi-Fi, fuso, brilho) — sem cabo nem computador.
+[status.embrapa.io](https://status.embrapa.io)) e exibe o estado dos cinco grupos de lá —
+**clusters**, **hosts**, **serviços**, **painéis** e **GPU servers** — com a mesma linguagem do
+painel (`Healthy` / `N off`). Tem **navegação por toque**, **relógio**, e é **configurado pela
+própria tela** (Wi-Fi, fuso, brilho) — sem cabo nem computador.
 
 É feito com um **Cheap Yellow Display (CYD / ESP32)** dentro de um case impresso em 3D. Sempre
 ligado, alimentado por USB.
@@ -31,13 +32,20 @@ ligado, alimentado por USB.
 
 | | |
 |---|---|
-| <img src="docs/images/20260621_010418.jpg" width="330"> | **Visão Geral** — um resumo de tudo: Clusters, Hosts, Serviços e o veredito **Geral**, cada um com quantos estão no ar e o status (`Healthy` / `N off`). |
-| <img src="docs/images/20260621_010428.jpg" width="330"> | **Clusters** — lista dos clusters com indicador de status e a latência de cada um. |
-| <img src="docs/images/20260621_010435.jpg" width="330"> | **Hosts** — lista dos hosts monitorados (rolável), com status e latência. |
-| <img src="docs/images/20260621_010443.jpg" width="330"> | **Serviços** — lista dos serviços; o que estiver fora do ar aparece em destaque no topo. |
-| <img src="docs/images/20260621_010450.jpg" width="330"> | **Sistema** — Wi-Fi/IP, tempo ligado, última atualização, versão e o botão **Configurar**. |
+| <img src="docs/images/screen-home.png" width="330"> | **Início** — seis cards: um por grupo (quantos estão no ar e o status, `Healthy` / `N off`) e **Configurar**. O veredito geral fica no alto, ao lado do relógio. Toque num card para abrir a listagem dele. |
+| <img src="docs/images/screen-list.png" width="330"> | **Listagem** — os itens do grupo, com status e latência; o que estiver fora do ar aparece em destaque no topo. A lista rola, e o botão **Início** volta para os cards. |
+| <img src="docs/images/screen-panels.png" width="330"> | **Painéis** e **GPU Servers** — os grupos novos do Gatus têm card e listagem próprios. |
+| <img src="docs/images/screen-config.png" width="330"> | **Configurar** — Wi-Fi, fuso horário, intervalo de atualização e brilho. Rolando, aparecem o sinal do Wi-Fi, o tempo ligado, a última atualização e a versão. |
+| <img src="docs/images/screen-offline.png" width="330"> | **Sem dados** — se a leitura falha por mais de 3 minutos, a tela deixa de dizer `Healthy`: mostra `Offline` e há quanto tempo os números estão parados. |
 
-> A navegação é pelo **menu lateral** (Geral · Clusters · Hosts · Serviços · Sistema).
+> As imagens acima saem do simulador (`tools/sim/run.sh`), que roda o próprio firmware no computador.
+
+**O LED** acompanha o veredito: **verde** = tudo no ar, **vermelho** = algo fora do ar, **azul** = sem
+dados (sem Wi-Fi ou sem resposta do monitoramento).
+
+**Se o Wi-Fi cair**, o Desk Buddy reconecta sozinho: tenta de novo em 15 s, 30 s e depois a cada
+minuto; se a rede diz estar conectada mas nada responde, refaz a conexão; e, depois de 15 minutos sem
+rede, reinicia. Não é preciso abrir a Configuração.
 
 ## 🛒 O que você vai precisar
 
@@ -70,7 +78,7 @@ Quer compilar do código ou customizar? Veja **[docs/tech-spec.md](docs/tech-spe
 **Na primeira vez que ligar**, o Desk Buddy abre sozinho a tela de **Configuração**: digite o nome e
 a senha do seu **Wi-Fi (2,4 GHz)** pela tela de toque, salve, e pronto — ele se conecta e começa a
 mostrar o status. Depois, dá para trocar Wi-Fi, fuso horário, intervalo de atualização e brilho a
-qualquer momento em **Sistema → Configurar**.
+qualquer momento no card **Configurar**.
 
 ## 🛠️ Quer customizar?
 
